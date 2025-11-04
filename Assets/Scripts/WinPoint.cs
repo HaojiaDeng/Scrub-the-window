@@ -30,24 +30,97 @@ public class WinPoint : MonoBehaviour
         Color32[] cols = new Color32[size * size];
         float cx = (size - 1) / 2f;
         float cy = (size - 1) / 2f;
-        float r2 = (size / 2f) * (size / 2f);
-        Color32 col32 = color;
-
-        for (int y = 0; y < size; y++)
+        
+        for (int i = 0; i < cols.Length; i++)
         {
-            for (int x = 0; x < size; x++)
+            cols[i] = new Color32(0, 0, 0, 0);
+        }
+
+        Color32 crackColor = new Color32(40, 40, 40, 180);
+        Color32 crackBright = new Color32(200, 200, 220, 120);
+        
+        // Seed random based on position for consistent but varied patterns
+        Random.InitState((int)(transform.position.x * 1000 + transform.position.y * 1000));
+        
+        // Draw radiating crack lines with random angles and lengths
+        int numCracks = Random.Range(5, 9);
+        for (int i = 0; i < numCracks; i++)
+        {
+            float angle = Random.Range(0f, Mathf.PI * 2f);
+            float crackLength = size * Random.Range(0.35f, 0.5f);
+            float wobbleFreq = Random.Range(8f, 15f);
+            float wobbleAmp = Random.Range(1.5f, 3.5f);
+            
+            for (float t = 0; t < 1f; t += 0.015f)
             {
-                float dx = x - cx;
-                float dy = y - cy;
-                float d2 = dx * dx + dy * dy;
-                int idx = y * size + x;
-                if (d2 <= r2)
+                float dist = crackLength * (t + Random.Range(-0.05f, 0.05f));
+                float wobble = Mathf.Sin(t * wobbleFreq) * wobbleAmp * t;
+                float randomOffset = Random.Range(-0.5f, 0.5f);
+                
+                int px = Mathf.RoundToInt(cx + Mathf.Cos(angle) * dist + Mathf.Sin(angle) * wobble + randomOffset);
+                int py = Mathf.RoundToInt(cy + Mathf.Sin(angle) * dist - Mathf.Cos(angle) * wobble + randomOffset);
+                
+                if (px >= 0 && px < size && py >= 0 && py < size)
                 {
-                    cols[idx] = col32;
+                    int idx = py * size + px;
+                    cols[idx] = crackColor;
+                    
+                    // Add thickness with random variation
+                    int thickness = Random.Range(1, 3);
+                    for (int dx = -thickness; dx <= thickness; dx++)
+                    {
+                        for (int dy = -thickness; dy <= thickness; dy++)
+                        {
+                            int nx = px + dx;
+                            int ny = py + dy;
+                            if (nx >= 0 && nx < size && ny >= 0 && ny < size)
+                            {
+                                int nidx = ny * size + nx;
+                                if (cols[nidx].a < 100 && Random.value > 0.3f)
+                                {
+                                    cols[nidx] = crackBright;
+                                }
+                            }
+                        }
+                    }
                 }
-                else
+            }
+            
+            // Add some branching cracks
+            if (Random.value > 0.5f)
+            {
+                float branchPoint = Random.Range(0.3f, 0.7f);
+                float branchAngle = angle + Random.Range(-0.8f, 0.8f);
+                float branchLength = crackLength * Random.Range(0.2f, 0.4f);
+                
+                for (float t = 0; t < 1f; t += 0.02f)
                 {
-                    cols[idx] = new Color32(0, 0, 0, 0);
+                    float dist = branchLength * t;
+                    float startDist = crackLength * branchPoint;
+                    int px = Mathf.RoundToInt(cx + Mathf.Cos(angle) * startDist + Mathf.Cos(branchAngle) * dist);
+                    int py = Mathf.RoundToInt(cy + Mathf.Sin(angle) * startDist + Mathf.Sin(branchAngle) * dist);
+                    
+                    if (px >= 0 && px < size && py >= 0 && py < size)
+                    {
+                        cols[py * size + px] = crackColor;
+                    }
+                }
+            }
+        }
+        
+        // Add central impact point
+        for (int y = -3; y <= 3; y++)
+        {
+            for (int x = -3; x <= 3; x++)
+            {
+                if (x * x + y * y <= 9)
+                {
+                    int px = Mathf.RoundToInt(cx) + x;
+                    int py = Mathf.RoundToInt(cy) + y;
+                    if (px >= 0 && px < size && py >= 0 && py < size)
+                    {
+                        cols[py * size + px] = new Color32(20, 20, 20, 200);
+                    }
                 }
             }
         }

@@ -87,9 +87,9 @@ public class Brush : MonoBehaviour
                 {
                     if (fp == null) continue;
                     float d = Vector2.Distance(p, fp.transform.position);
-                    if (d <= fp.radius)
+                    if (d <= fp.radius + brushRadius)
                     {
-                        gm.Lose("try to avoid the red points! :(");
+                        gm.Lose("try to avoid the cracked glass! :(");
                         return;
                     }
                 }
